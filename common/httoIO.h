@@ -1,5 +1,5 @@
 #pragma once
-#include "logger.h"
+
 size_t WriteData(void *ptr, size_t size, size_t nmemb, void *stream);
 
 size_t DownloadData(void *ptr, size_t size, size_t nmemb, void *stream);

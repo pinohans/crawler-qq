@@ -30,6 +30,15 @@
     <ClInclude Include="Resource.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="injection.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="logdlg.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="config.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="crawler-client.cpp">
@@ -39,6 +48,15 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="stdafx.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="injection.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="logdlg.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="config.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>

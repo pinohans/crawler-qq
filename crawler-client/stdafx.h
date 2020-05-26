@@ -34,20 +34,14 @@
 
 
 
-#include <strsafe.h>
-#include <string>
-#include <iostream>
-#include <filesystem>
+#include <afxwin.h>
+#include <afxcontrolbars.h>
 
-#include "../common/convert.h"
-#include "../common/httoIO.h"
-#include "../common/logger.h"
-#include "../common/include/json/json.hpp"
-#include "../common/include/csv/reader.hpp"
+#include "../common/stdafx.h"
 
-using json = nlohmann::json;
+#include "injection.h"
+#include <afxcontrolbars.h>
 
-namespace fs = std::filesystem;
 
 
 

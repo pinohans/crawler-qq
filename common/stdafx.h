@@ -13,9 +13,28 @@
 
 // 在此处引用程序需要的其他标头
 
-#include <string>
 #include <windows.h>
-#include <filesystem>
+#include <strsafe.h>
+#include <iostream>
+#include <string>
 #include <sstream>
+#include <fstream>
+#include <filesystem>
 
 #include "include/curl/curl.h"
+#include "include/csv/reader.hpp"
+#include "include/json/json.hpp"
+#include "include/librabbitmq/amqp.h"
+#include "include/librabbitmq/amqp_tcp_socket.h"
+#include "include/detours/detours.h"
+#include "Wincrypt.h"
+#include "sqlite3.h"
+#include "convert.h"
+#include "logger.h"
+#include "httoIO.h"
+#include "msg.h"
+#include "ITXData.h"
+#include "sqlite3.h"
+using json = nlohmann::json;
+
+namespace fs = std::filesystem;

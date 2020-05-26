@@ -10,7 +10,6 @@
 
 #include "resource.h"		// 主符号
 
-
 // CcrawlerclientApp:
 // 有关此类的实现，请参阅 crawler-client.cpp
 //
@@ -21,10 +20,6 @@ public:
 	CcrawlerclientApp();
 	httpIO* http;
 	logger* log;
-	HMODULE hInjectModule;
-	csv::Reader* cr;
-	std::filesystem::path pLogpath;
-	HANDLE hInjectStop;
 
 // 重写
 public:
@@ -33,6 +28,7 @@ public:
 // 实现
 
 	DECLARE_MESSAGE_MAP()
+//	bool Refresh();
 };
 
 extern CcrawlerclientApp theApp;

@@ -1,8 +1,4 @@
 #include "stdafx.h"
-#include "httoIO.h"
-
-#include "../common/include/librabbitmq/amqp.h"
-#include "../common/include/librabbitmq/amqp_tcp_socket.h"
 
 size_t WriteData(void *ptr, size_t size, size_t nmemb, void *stream)
 {
@@ -42,14 +38,14 @@ std::string httpIO::Get(std::string sUrl)
 		cRes = curl_easy_perform(pCurl);
 		if (cRes != CURLE_OK)
 		{
-			this->pLog->doLog(L"[ERROR]", U82WS(std::string("curl_easy_perform() failed: ") + curl_easy_strerror(cRes)));
+			this->pLog->doLog(u8"[ERROR]", std::string("curl_easy_perform() failed: ") + curl_easy_strerror(cRes));
 			curl_easy_cleanup(pCurl);
 			return "";
 		}
 		curl_easy_cleanup(pCurl);
 		return ssOut.str();
 	}
-	this->pLog->doLog(L"[ERROR]", L"curl初始化失败！");
+	this->pLog->doLog(u8"[ERROR]", u8"curl初始化失败！");
 	return "";
 }
 std::string httpIO::Post(std::string sUrl, std::string sData)
@@ -69,7 +65,7 @@ std::string httpIO::Post(std::string sUrl, std::string sData)
 		if (cRes != CURLE_OK)
 
 		{
-			this->pLog->doLog(L"[ERROR]", U82WS(std::string("curl_easy_perform() failed: ") + curl_easy_strerror(cRes)));
+			this->pLog->doLog(u8"[ERROR]", std::string("curl_easy_perform() failed: ") + curl_easy_strerror(cRes));
 
 			curl_easy_cleanup(pCurl);
 			return "";
@@ -77,9 +73,8 @@ std::string httpIO::Post(std::string sUrl, std::string sData)
 		curl_easy_cleanup(pCurl);
 		return ssOut.str();
 	}
-	this->pLog->doLog(L"[ERROR]", L"curl初始化失败！");
+	this->pLog->doLog(u8"[ERROR]", u8"curl初始化失败！");
 	return "";
-
 }
 BOOL httpIO::Download(std::string sUrl, std::string sFilename)
 {
@@ -102,7 +97,7 @@ BOOL httpIO::Download(std::string sUrl, std::string sFilename)
 			cRes = curl_easy_perform(pCurl);
 			if (cRes != CURLE_OK)
 			{
-				this->pLog->doLog(L"[ERROR]", U82WS(std::string("curl_easy_perform() failed: ") + curl_easy_strerror(cRes)));
+				this->pLog->doLog(u8"[ERROR]", std::string("curl_easy_perform() failed: ") + curl_easy_strerror(cRes));
 				fclose(fpFile);
 				curl_easy_cleanup(pCurl);
 				return FALSE;
@@ -111,10 +106,10 @@ BOOL httpIO::Download(std::string sUrl, std::string sFilename)
 			curl_easy_cleanup(pCurl);
 			return TRUE;
 		}
-		this->pLog->doLog(L"[ERROR]", L"下载资源目标文件被占用！");
+		this->pLog->doLog(u8"[ERROR]", u8"下载资源目标文件被占用！");
 		curl_easy_cleanup(pCurl);
 	}
-	this->pLog->doLog(L"[ERROR]", L"curl初始化失败！");
+	this->pLog->doLog(u8"[ERROR]", u8"curl初始化失败！");
 	return FALSE;
 }
 

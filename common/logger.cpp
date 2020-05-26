@@ -1,91 +1,176 @@
 #include "stdafx.h"
-#include "logger.h"
 
-logger::logger(std::wstring wsDir, void(*Callback)(void))
+logger::logger(std::filesystem::path path, std::string sModule)
 {
-	this->init(wsDir, Callback);
-}
-
-logger::logger(std::string sDir, void(*Callback)(void))
-{
-	this->init(U82WS(sDir), Callback);
+	this->path = path;
+	this->sModule = sModule;
 }
 
 logger::~logger()
 {
 }
 
-
-size_t logger::doLog(std::string sLevel, std::string sMessage)
-{
-	this->GetNow();
-	std::string content = this->Escape(this->sTime) + "," + this->Escape(sLevel) + "," + this->Escape(sMessage) + "\n";
-	size_t written = fwrite(content.c_str(), sizeof(CHAR), content.length(), this->fpFile);
-
-	fclose(this->fpFile);
-	this->fpFile = NULL;
-
-	if (this->Callback) this->Callback();
-	return written;
-}
-
-size_t logger::doLog(std::wstring wsLevel, std::wstring wsMessage)
-{
-	return this->doLog(WS2U8(wsLevel), WS2U8(wsMessage));
-}
-
-void logger::init(std::wstring wsDir, void(*Callback)(void))
-{
-	this->pDir = std::filesystem::path(wsDir);
-	this->Callback = Callback;
-	std::filesystem::create_directories(this->pDir);
-
-	this->fpFile = NULL;
-}
-
-std::string logger::Escape(std::string sStr)
-{
-	std::string sSearch = "\"";
-	std::string sReplace = "\"\"";
-	size_t pos = sStr.find(sSearch);
-
-	while (pos != std::string::npos)
-	{
-		sStr.replace(pos, sSearch.size(), sReplace);
-		pos = sStr.find(sSearch, pos + sReplace.size());
-	}
-	return "\"" + sStr + "\"";
-}
-
-void logger::GetNow()
+std::string GetNow(int level)
 {
 	SYSTEMTIME stTime;
 	GetLocalTime(&stTime);
 	CHAR strTime[MAX_PATH];
-	WCHAR strDate[MAX_PATH];
-
-	sprintf_s(strTime, u8"%04d-%02d-%02d %02d:%02d:%02d",
-		stTime.wYear, stTime.wMonth, stTime.wDay,
-		stTime.wHour, stTime.wMinute, stTime.wSecond);
-	this->sTime = strTime;
-	
-	wsprintfW(strDate, L"%04d-%02d-%02d",
-		stTime.wYear, stTime.wMonth, stTime.wDay);
-
-	std::filesystem::path pTmpFile = this->pDir / std::filesystem::path(strDate);
-	pTmpFile += std::filesystem::path(L".csv");
-
-	if (!this->fpFile)
+	if (level == 1)
 	{
-		this->pFile = pTmpFile;
-		_wfopen_s(&this->fpFile, this->pFile.c_str(), L"ab");
+		sprintf_s(strTime, u8"%04d-%02d-%02d",
+			stTime.wYear, stTime.wMonth, stTime.wDay);
 	}
-
-	if (pTmpFile != this->pFile)
+	else if (level == 2)
 	{
-		this->pFile = pTmpFile;
-		fclose(this->fpFile);
-		_wfopen_s(&this->fpFile, this->pFile.c_str(), L"ab");
+		sprintf_s(strTime, u8"%04d-%02d-%02d %02d:%02d:%02d",
+			stTime.wYear, stTime.wMonth, stTime.wDay,
+			stTime.wHour, stTime.wMinute, stTime.wSecond);
 	}
-	return;
+	return strTime;
 }
+
+
+BOOL logger::doLog(std::string sLevel, std::string sMessage)
+{
+	std::filesystem::path pLogFilename = this->path / this->sModule / (GetNow(1) + ".db");
+	if (this->sql && !std::filesystem::path(sqlite3_db_filename(this->sql, NULL)).compare(pLogFilename)) {}
+	else
+	{
+
+		if (this->sql)
+		{
+			sqlite3_close_v2(this->sql);
+			this->sql = NULL;
+		}
+		int result = sqlite3_open_v2(pLogFilename.string().c_str(), &this->sql, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
+		if (result != SQLITE_OK)
+		{
+			this->sql = NULL;
+			return FALSE;
+		}
+	}
+	sqlite3_stmt *stmt = NULL;
+
+	int result = sqlite3_prepare_v2(sql, "CREATE TABLE IF NOT EXISTS log( id integer PRIMARY KEY AUTOINCREMENT, time text NOT NULL, level text NOT NULL, message text NOT NULL ); ", -1, &stmt, NULL);
+
+	if (result == SQLITE_OK) {
+		sqlite3_step(stmt);
+		sqlite3_finalize(stmt);
+
+		result = sqlite3_prepare_v2(sql, "INSERT INTO log(time, level, message) VALUES(?,?,?);", -1, &stmt, NULL);
+		if (result == SQLITE_OK) {
+			sqlite3_bind_text(stmt, 1, GetNow(2).c_str(), -1, SQLITE_STATIC);
+			sqlite3_bind_text(stmt, 2, sLevel.c_str(), -1, SQLITE_STATIC);
+			sqlite3_bind_text(stmt, 3, sMessage.c_str(), -1, SQLITE_STATIC);
+			sqlite3_step(stmt);
+			sqlite3_finalize(stmt);
+		}
+	}
+	return TRUE;
+}
+
+
+BOOL logger::doConfig(std::string sKey, std::string sValue, BOOL bUpdate)
+{
+	std::filesystem::path pLogFilename = this->path / "config.db";
+	if (this->sql_log) {}
+	else
+	{
+		int result = sqlite3_open_v2(pLogFilename.string().c_str(), &this->sql_log, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
+		if (result != SQLITE_OK)
+		{
+			this->sql_log = NULL;
+			return FALSE;
+		}
+	}
+	sqlite3_stmt *stmt = NULL;
+
+	int result = sqlite3_prepare_v2(this->sql_log, "CREATE TABLE IF NOT EXISTS config( id integer PRIMARY KEY AUTOINCREMENT, module text NOT NULL, key text NOT NULL, value text NOT NULL ); ", -1, &stmt, NULL);
+
+	if (result == SQLITE_OK) {
+		sqlite3_step(stmt);
+		sqlite3_finalize(stmt);
+
+		result = sqlite3_prepare_v2(this->sql_log, "SELECT count(*) FROM config WHERE module=? AND key=?;", -1, &stmt, NULL);
+		if (result == SQLITE_OK) {
+			sqlite3_bind_text(stmt, 1, this->sModule.c_str(), -1, SQLITE_STATIC);
+			sqlite3_bind_text(stmt, 2, sKey.c_str(), -1, SQLITE_STATIC);
+			if (sqlite3_step(stmt) == SQLITE_ROW)
+			{
+				if (sqlite3_column_int(stmt, 0) > 0 && bUpdate)
+				{
+					sqlite3_finalize(stmt);
+					result = sqlite3_prepare_v2(this->sql_log, "UPDATE config SET value=? WHERE module=? AND key=?;", -1, &stmt, NULL);
+					if (result == SQLITE_OK) {
+						sqlite3_bind_text(stmt, 1, sValue.c_str(), -1, SQLITE_STATIC);
+						sqlite3_bind_text(stmt, 2, this->sModule.c_str(), -1, SQLITE_STATIC);
+						sqlite3_bind_text(stmt, 3, sKey.c_str(), -1, SQLITE_STATIC);
+						sqlite3_step(stmt);
+						sqlite3_finalize(stmt);
+					}
+				}
+				else
+				{
+					sqlite3_finalize(stmt);
+					result = sqlite3_prepare_v2(this->sql_log, "INSERT INTO config(module, key, value) VALUES(?,?,?);", -1, &stmt, NULL);
+					if (result == SQLITE_OK) {
+						sqlite3_bind_text(stmt, 1, this->sModule.c_str(), -1, SQLITE_STATIC);
+						sqlite3_bind_text(stmt, 2, sKey.c_str(), -1, SQLITE_STATIC);
+						sqlite3_bind_text(stmt, 3, sValue.c_str(), -1, SQLITE_STATIC);
+						sqlite3_step(stmt);
+						sqlite3_finalize(stmt);
+					}
+				}
+			}
+		}
+
+	}
+	return TRUE;
+}
+
+
+
+BOOL logger::deleteConfig(std::string sKey, int id)
+{
+	std::filesystem::path pLogFilename = this->path / "config.db";
+	if (this->sql_log) {}
+	else
+	{
+		int result = sqlite3_open_v2(pLogFilename.string().c_str(), &this->sql_log, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
+		if (result != SQLITE_OK)
+		{
+			this->sql_log = NULL;
+			return FALSE;
+		}
+	}
+	sqlite3_stmt *stmt = NULL;
+
+	int result = sqlite3_prepare_v2(this->sql_log, "CREATE TABLE IF NOT EXISTS config( id integer PRIMARY KEY AUTOINCREMENT, module text NOT NULL, key text NOT NULL, value text NOT NULL ); ", -1, &stmt, NULL);
+
+	if (result == SQLITE_OK) {
+		sqlite3_step(stmt);
+		sqlite3_finalize(stmt);
+		if (id != -1)
+		{
+			result = sqlite3_prepare_v2(this->sql_log, "DELETE FROM config WHERE module=? AND id=?;", -1, &stmt, NULL);
+			if (result == SQLITE_OK) {
+				sqlite3_bind_text(stmt, 1, this->sModule.c_str(), -1, SQLITE_STATIC);
+				sqlite3_bind_int(stmt, 2, id);
+				sqlite3_step(stmt);
+				sqlite3_finalize(stmt);
+			}
+		}
+		else
+		{
+			result = sqlite3_prepare_v2(this->sql_log, "DELETE FROM config WHERE module=? AND key=?;", -1, &stmt, NULL);
+			if (result == SQLITE_OK) {
+				sqlite3_bind_text(stmt, 1, this->sModule.c_str(), -1, SQLITE_STATIC);
+				sqlite3_bind_text(stmt, 2, sKey.c_str(), -1, SQLITE_STATIC);
+				sqlite3_step(stmt);
+				sqlite3_finalize(stmt);
+			}
+		}
+	}
+	return TRUE;
+}
+

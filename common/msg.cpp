@@ -1,8 +1,5 @@
 #include "stdafx.h"
-#include "msg.h"
-#include "../common/include/json/json.hpp"
 
-using json = nlohmann::json;
 
 msg::msg(logger* log)
 {
@@ -132,41 +129,46 @@ BOOL msg::Send()
 	if (this->bDone)
 	{
 		std::string sMessage = this->Jsondump();
-		std::string sRet = this->http->Post("http://114.67.180.124/anonymousApi", "{\"type\":\"1\"}");
-		if (sRet == "")return FALSE;
+		DWORD len = 0;
+		CryptBinaryToStringA((const BYTE*)sMessage.c_str(), sMessage.length(), CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF, NULL, &len);
+		LPSTR str = (LPSTR)malloc(len);
+		CryptBinaryToStringA((const BYTE*)sMessage.c_str(), sMessage.length(), CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF, str, &len);
 		if (this->log)
 		{
-			this->log->doLog("[debug]", sMessage);
+			this->log->doLog("debug", sMessage);
 		}
-		json jResp = json::parse(sRet.c_str());
-		if (jResp["error"] == "0")
-		{
-			json jdata = jResp["data"];
-			for (json::iterator it = jdata.begin(); it != jdata.end(); it++)
-			{
-				if ((*it)["method"].get<std::string>() == "http")
-				{
-					this->http->Post((*it)["url"].get<std::string>(), sMessage);
-				}
-				else if ((*it)["method"].get<std::string>() == "rabbitmq")
-				{
-					this->http->SendRabbitmq(
-						(*it)["hostname"].get<std::string>(),
-						(*it)["port"].get<std::string>(),
-						(*it)["vhost"].get<std::string>(),
-						(*it)["username"].get<std::string>(),
-						(*it)["password"].get<std::string>(),
-						(*it)["queue"].get<std::string>(),
-						(*it)["exchange"].get<std::string>(),
-						(*it)["routingkey"].get<std::string>(),
-						sMessage
-					);
 
-				}
+		std::filesystem::path pLogFilename = this->log->path / "config.db";
+		if (this->sql) {}
+		else
+		{
+			int result = sqlite3_open_v2(pLogFilename.string().c_str(), &this->sql, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
+			if (result != SQLITE_OK)
+			{
+				this->sql = NULL;
+				return FALSE;
 			}
-			return TRUE;
 		}
-		return FALSE;
+		sqlite3_stmt *stmt = NULL;
+
+		int result = sqlite3_prepare_v2(this->sql, "CREATE TABLE IF NOT EXISTS config( id integer PRIMARY KEY AUTOINCREMENT, module text NOT NULL, key text NOT NULL, value text NOT NULL ); ", -1, &stmt, NULL);
+
+		if (result == SQLITE_OK) {
+			sqlite3_step(stmt);
+			sqlite3_finalize(stmt);
+
+			result = sqlite3_prepare_v2(this->sql, "SELECT value FROM config WHERE key='url'; ", -1, &stmt, NULL);
+
+			if (result == SQLITE_OK) {
+
+				while (sqlite3_step(stmt) == SQLITE_ROW) {
+					std::string url = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
+					this->http->Post(url, str);
+				}
+				sqlite3_finalize(stmt);
+				return TRUE;
+			}
+		}
 	}
 	return FALSE;
 }
@@ -187,9 +189,11 @@ std::string msg::Jsondump()
 	jData["groupid"] = this->sGroupid;
 	jData["groupname"] = this->sGroupname;
 	jData["crawltime"] = this->sCrawltime;
+	jData["title"] = this->sTitle;
+	jData["source"] = this->sSource;
 	jData["type"] = "0";
 	jData["status"] = "0";
 	jMessage["data"] = jData;
 	
-	return jData.dump();
+	return jMessage.dump();
 }

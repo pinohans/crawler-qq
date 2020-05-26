@@ -5,7 +5,6 @@
 #include "stdafx.h"
 #include "crawler-client.h"
 #include "crawler-clientDlg.h"
-
 #ifdef _DEBUG
 #define new DEBUG_NEW
 #endif
@@ -56,22 +55,13 @@ BOOL CcrawlerclientApp::InitInstance()
 	SetRegistryKey(_T("应用程序向导生成的本地应用程序"));
 
 	// logger部分
-	WCHAR strFilename[MAX_PATH];
-	GetModuleFileNameW(0, strFilename, MAX_PATH);
-	this->pLogpath = strFilename;
-	this->pLogpath = this->pLogpath.remove_filename();
-	this->pLogpath /= L"log";
-	this->log = new logger(this->pLogpath.c_str());
+	
+	this->log = new logger((std::filesystem::current_path() / std::filesystem::path("data")).c_str(), "main");
+	std::filesystem::create_directories(this->log->path);
+	std::filesystem::create_directories(this->log->path / std::filesystem::path("main"));
 
 	// httpIO部分
 	this->http = new httpIO(this->log);
-
-	// injection部分
-	this->hInjectModule = NULL;
-	this->hInjectStop = CreateEventW(NULL, TRUE, TRUE, L"INJECT_STOP");
-
-	// csv
-	this->cr = NULL;
 
 	CcrawlerclientDlg dlg;
 	m_pMainWnd = &dlg;
@@ -103,11 +93,6 @@ BOOL CcrawlerclientApp::InitInstance()
 #if !defined(_AFXDLL) && !defined(_AFX_NO_MFC_CONTROLS_IN_DIALOGS)
 	ControlBarCleanUp();
 #endif
-	if (this->cr)
-	{
-		delete this->cr;
-		this->cr = NULL;
-	}
 	if (this->log)
 	{
 		delete this->log;
@@ -124,3 +109,10 @@ BOOL CcrawlerclientApp::InitInstance()
 	return FALSE;
 }
 
+
+
+//bool CcrawlerclientApp::Refresh()
+//{
+//	// TODO: 在此处添加实现代码.
+//	return false;
+//}

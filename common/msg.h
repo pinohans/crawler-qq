@@ -1,6 +1,5 @@
 #pragma once
-#include "logger.h"
-#include "httoIO.h"
+
 class msg
 {
 public:
@@ -16,11 +15,14 @@ public:
 	std::string sGroupid;
 	std::string sGroupname;
 	std::string sCrawltime;
+	std::string sSource = "qq";
+	std::string sTitle = "PC";
 	bool bLongtext;
 	bool bDone;
 
 	BOOL Send();
 	httpIO* http;
+	sqlite3 * sql = NULL;
 protected:
 	std::string sMsg;
 	void Parse();

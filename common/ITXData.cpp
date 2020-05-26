@@ -1,5 +1,4 @@
 #include "stdafx.h"
-#include "ITXData.h"
 
 
 ITXData::ITXData(PVOID pAddr)

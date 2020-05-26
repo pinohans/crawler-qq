@@ -11,7 +11,8 @@ class CcrawlerclientDlg : public CDialogEx
 // 构造
 public:
 	CcrawlerclientDlg(CWnd* pParent = nullptr);	// 标准构造函数
-
+	injection* _injection;
+	sqlite3 *sql_log = NULL;
 // 对话框数据
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_CRAWLERCLIENT_DIALOG };
@@ -40,15 +41,9 @@ public:
 	afx_msg void OnLog();
 	afx_msg void OnStart();
 	afx_msg void OnStop();
-	afx_msg void OnDropdownModulecombo();
-	CComboBox moduleCombo;
-	CComboBox dateCombo;
-	afx_msg void OnDropdownDatecombo();
-	afx_msg void OnSelchangeDatecombo();
 	CListCtrl logList;
-	afx_msg void OnLvnGetdispinfoList1(NMHDR *pNMHDR, LRESULT *pResult);
-	std::vector<csv::unordered_flat_map<std::string_view, std::string>> rows;
 	CButton refreshButton;
 	afx_msg void OnClickedRefreshButton();
 	afx_msg void OnTimer(UINT_PTR nIDEvent);
+	afx_msg void OnConfig();
 };

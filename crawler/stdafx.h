@@ -15,9 +15,6 @@
 
 // 在此处引用程序需要的其他标头
 
-#include "../common/include/detours/detours.h"
 
-#include <filesystem>
-#include "../common/logger.h"
-#include "../common/msg.h"
-#include "../common/ITXData.h"
+#include "../common/stdafx.h"
+

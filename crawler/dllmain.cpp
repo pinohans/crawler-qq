@@ -10,6 +10,7 @@ Hook_TranslatePbMsgToMsgPack TrueTranslatePbMsgToMsgPack;
 Hook_GetSelfUin TrueGetSelfUin;
 logger *mylog;
 std::filesystem::path pLogpath;
+std::filesystem::path pDatapath;
 std::string sUin;
 
 int __cdecl NewTranslateGroupMsgToMsgPack(PVOID a1, struct CTXBuffer *a2, __int64 a3, struct ITXMsgPack *a4, struct ITXArray *a5)
@@ -127,10 +128,7 @@ void Init(HMODULE hModule)
 	WCHAR lpFilename[MAX_PATH];
 	GetModuleFileNameW(hModule, lpFilename, MAX_PATH);
 
-	pLogpath = std::filesystem::path(lpFilename);
-	pLogpath = pLogpath.remove_filename();
-	pLogpath /= std::filesystem::path(L"log");
-
+	pLogpath = std::filesystem::path(lpFilename).remove_filename() / std::filesystem::path("data");
 	hModule = GetModuleHandle(TEXT("KernelUtil.dll"));
 	TrueTranslateGroupMsgToMsgPack = (Hook_TranslateGroupMsgToMsgPack)GetProcAddress(hModule, "?TranslateGroupMsgToMsgPack@Msg@Util@@YAHABVCTXBuffer@@_JPAUITXMsgPack@@PAUITXArray@@PAUITXData@@@Z");
 
@@ -150,17 +148,11 @@ void Init(HMODULE hModule)
 		return;
 	}
 	sUin = std::to_string(TrueGetSelfUin());
-	pLogpath /= std::filesystem::path(sUin);
+	mylog = new logger(pLogpath, sUin);
+	if (!std::filesystem::exists(pLogpath / sUin)) std::filesystem::create_directories(pLogpath / sUin);
 
-	mylog = new logger(pLogpath);
 	std::string sPid = std::to_string(GetCurrentProcessId());
-	FILE* fp = NULL;
-	_wfopen_s(&fp, (pLogpath / "pid").c_str(), L"wb");
-	if (fp)
-	{
-		fwrite(sPid.c_str(), 1, sPid.length(), fp);
-		fclose(fp);
-	}
+	mylog->doConfig("pid", sPid);
 }
 
 BOOL APIENTRY DllMain( HMODULE hModule,
@@ -180,9 +172,9 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		break;
 	case DLL_PROCESS_DETACH:
 		Unhook();
+		mylog->doConfig("pid", "");
 		if (mylog)delete mylog;
 		mylog = NULL;
-		std::filesystem::remove(pLogpath / "pid");
         break;
     }
     return TRUE;
