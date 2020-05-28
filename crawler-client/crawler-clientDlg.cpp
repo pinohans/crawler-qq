@@ -227,7 +227,7 @@ void CcrawlerclientDlg::OnClickedRefreshButton()
 	if (this->sql_log) {}
 	else
 	{
-		int result = sqlite3_open_v2(pLogFilename.string().c_str(), &this->sql_log, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
+		int result = sqlite3_open_v2(WS2U8(pLogFilename.wstring()).c_str(), &this->sql_log, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
 		if (result != SQLITE_OK)
 		{
 			this->sql_log = NULL;

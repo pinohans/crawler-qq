@@ -91,42 +91,44 @@ BOOL SetPrivilege(
 
 BOOL LoadLib(LPCTSTR sModule, DWORD dwID)
 {
+	theApp.log->doLog("info", std::to_string(dwID) + u8"开始注入");
 
 	TCHAR szModule[MAX_PATH];
 	GetFullPathName(sModule, MAX_PATH, szModule, NULL);
+	theApp.log->doLog("info", u8"获得模块路径" + WS2U8(szModule));
+	//HANDLE hToken;
+	//int dwRetVal = RTN_OK; // assume success from main()
 
-	HANDLE hToken;
-	int dwRetVal = RTN_OK; // assume success from main()
+	//if (!OpenThreadToken(GetCurrentThread(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, FALSE, &hToken))
+	//{
+	//	theApp.log->doLog("error", u8"thread token获取失败");
+	//	if (GetLastError() == ERROR_NO_TOKEN)
+	//	{
+	//		if (!ImpersonateSelf(SecurityImpersonation))
+	//			return FALSE;
 
-	if (!OpenThreadToken(GetCurrentThread(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, FALSE, &hToken))
-	{
-		if (GetLastError() == ERROR_NO_TOKEN)
-		{
-			if (!ImpersonateSelf(SecurityImpersonation))
-				return RTN_ERROR;
+	//		if (!OpenThreadToken(GetCurrentThread(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, FALSE, &hToken)) {
+	//			return FALSE;
+	//		}
+	//	}
+	//	else
+	//		return FALSE;
+	//}
 
-			if (!OpenThreadToken(GetCurrentThread(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, FALSE, &hToken)) {
-				return RTN_ERROR;
-			}
-		}
-		else
-			return RTN_ERROR;
-	}
-	cout << 1 << endl;
 	// enable SeDebugPrivilege
-	if (!SetPrivilege(hToken, SE_DEBUG_NAME, TRUE))
-	{
-		CloseHandle(hToken);
-		return RTN_ERROR;
-	}
-	cout << 2 << endl;
+	//if (!SetPrivilege(hToken, SE_DEBUG_NAME, TRUE))
+	//{
+	//	theApp.log->doLog("error", u8"enable SeDebugPrivilege失败");
+	//	CloseHandle(hToken);
+	//	return FALSE;
+	//}
 
 	HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, dwID);//打开进程
 	if (!hProcess) {
-		CloseHandle(hToken);
+		theApp.log->doLog("error", u8"打开进程失败");
+		//CloseHandle(hToken);
 		return FALSE;
 	}
-	cout << 3 << endl;
 
 	int cByte = (_tcslen(szModule) + 1) * sizeof(TCHAR);
 	LPVOID pAddr = VirtualAllocEx(hProcess, NULL, cByte, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);//申请内存
@@ -134,13 +136,12 @@ BOOL LoadLib(LPCTSTR sModule, DWORD dwID)
 	if (!pAddr || !WriteProcessMemory(hProcess, pAddr, szModule, cByte, NULL))//写入dll地址
 	{
 		DWORD e = GetLastError();
-		cout << "error " << e << endl;
+		theApp.log->doLog("error", u8"写入dll地址失败" + std::to_string(e));
 		VirtualFreeEx(hProcess, pAddr, cByte, MEM_RELEASE);
 		CloseHandle(hProcess);
-		CloseHandle(hToken);
+		//CloseHandle(hToken);
 		return FALSE;
 	}
-	cout << 4 << endl;
 
 #ifdef _UNICODE  
 	PTHREAD_START_ROUTINE pfnStartAddr = (PTHREAD_START_ROUTINE)GetProcAddress(GetModuleHandle(_T("Kernel32")), "LoadLibraryW");
@@ -150,8 +151,9 @@ BOOL LoadLib(LPCTSTR sModule, DWORD dwID)
 
 	if (!pfnStartAddr)
 	{
+		theApp.log->doLog("error", u8"LoadLibraryW地址获取失败");
 		VirtualFreeEx(hProcess, pAddr, cByte, MEM_RELEASE);
-		CloseHandle(hToken);
+		//CloseHandle(hToken);
 		CloseHandle(hProcess);
 		return FALSE;
 	}
@@ -159,13 +161,14 @@ BOOL LoadLib(LPCTSTR sModule, DWORD dwID)
 	HANDLE hRemoteThread = CreateRemoteThread(hProcess, NULL, 0, pfnStartAddr, pAddr, 0, &dwThreadID);
 	if (!hRemoteThread)
 	{
+		theApp.log->doLog("error", u8"远程线程创建失败");
 		VirtualFreeEx(hProcess, pAddr, cByte, MEM_RELEASE);
-		CloseHandle(hToken);
+		//CloseHandle(hToken);
 		CloseHandle(hProcess);
 		return FALSE;
 	}
 	VirtualFreeEx(hProcess, pAddr, cByte, MEM_RELEASE);
-	CloseHandle(hToken);
+	//CloseHandle(hToken);
 	CloseHandle(hRemoteThread);
 	CloseHandle(hProcess);
 	return TRUE;

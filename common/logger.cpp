@@ -42,7 +42,7 @@ BOOL logger::doLog(std::string sLevel, std::string sMessage)
 			sqlite3_close_v2(this->sql);
 			this->sql = NULL;
 		}
-		int result = sqlite3_open_v2(pLogFilename.string().c_str(), &this->sql, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
+		int result = sqlite3_open_v2(WS2U8(pLogFilename.wstring()).c_str(), &this->sql, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
 		if (result != SQLITE_OK)
 		{
 			this->sql = NULL;
@@ -76,7 +76,7 @@ BOOL logger::doConfig(std::string sKey, std::string sValue, BOOL bUpdate)
 	if (this->sql_log) {}
 	else
 	{
-		int result = sqlite3_open_v2(pLogFilename.string().c_str(), &this->sql_log, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
+		int result = sqlite3_open_v2(WS2U8(pLogFilename.wstring()).c_str(), &this->sql_log, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
 		if (result != SQLITE_OK)
 		{
 			this->sql_log = NULL;
@@ -136,7 +136,7 @@ BOOL logger::deleteConfig(std::string sKey, int id)
 	if (this->sql_log) {}
 	else
 	{
-		int result = sqlite3_open_v2(pLogFilename.string().c_str(), &this->sql_log, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
+		int result = sqlite3_open_v2(WS2U8(pLogFilename.wstring()).c_str(), &this->sql_log, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
 		if (result != SQLITE_OK)
 		{
 			this->sql_log = NULL;

@@ -129,10 +129,6 @@ BOOL msg::Send()
 	if (this->bDone)
 	{
 		std::string sMessage = this->Jsondump();
-		DWORD len = 0;
-		CryptBinaryToStringA((const BYTE*)sMessage.c_str(), sMessage.length(), CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF, NULL, &len);
-		LPSTR str = (LPSTR)malloc(len);
-		CryptBinaryToStringA((const BYTE*)sMessage.c_str(), sMessage.length(), CRYPT_STRING_BASE64 | CRYPT_STRING_NOCRLF, str, &len);
 		if (this->log)
 		{
 			this->log->doLog("debug", sMessage);
@@ -142,7 +138,7 @@ BOOL msg::Send()
 		if (this->sql) {}
 		else
 		{
-			int result = sqlite3_open_v2(pLogFilename.string().c_str(), &this->sql, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
+			int result = sqlite3_open_v2(WS2U8(pLogFilename.wstring()).c_str(), &this->sql, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
 			if (result != SQLITE_OK)
 			{
 				this->sql = NULL;
@@ -163,7 +159,7 @@ BOOL msg::Send()
 
 				while (sqlite3_step(stmt) == SQLITE_ROW) {
 					std::string url = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
-					this->http->Post(url, str);
+					this->http->Post(url, sMessage);
 				}
 				sqlite3_finalize(stmt);
 				return TRUE;
@@ -189,9 +185,9 @@ std::string msg::Jsondump()
 	jData["groupid"] = this->sGroupid;
 	jData["groupname"] = this->sGroupname;
 	jData["crawltime"] = this->sCrawltime;
-	jData["title"] = this->sTitle;
-	jData["source"] = this->sSource;
-	jData["type"] = "0";
+	jData["title"] = "pc";
+	jData["source"] = "qq";
+	jData["type"] = "1";
 	jData["status"] = "0";
 	jMessage["data"] = jData;
 	

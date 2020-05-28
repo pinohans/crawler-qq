@@ -127,31 +127,36 @@ void Init(HMODULE hModule)
 {
 	WCHAR lpFilename[MAX_PATH];
 	GetModuleFileNameW(hModule, lpFilename, MAX_PATH);
-
 	pLogpath = std::filesystem::path(lpFilename).remove_filename() / std::filesystem::path("data");
+	logger mainLog = logger(pLogpath, "main");
+	std::string sPid = std::to_string(GetCurrentProcessId());
+
 	hModule = GetModuleHandle(TEXT("KernelUtil.dll"));
+	mainLog.doLog("debug", sPid + u8"发现KernelUtil.dll句柄");
 	TrueTranslateGroupMsgToMsgPack = (Hook_TranslateGroupMsgToMsgPack)GetProcAddress(hModule, "?TranslateGroupMsgToMsgPack@Msg@Util@@YAHABVCTXBuffer@@_JPAUITXMsgPack@@PAUITXArray@@PAUITXData@@@Z");
 
 	if (!TrueTranslateGroupMsgToMsgPack) {
+		mainLog.doLog("error", sPid + u8"TrueTranslateGroupMsgToMsgPack获取地址失败");
 		return;
 	}
 
 	TrueTranslatePbMsgToMsgPack = (Hook_TranslatePbMsgToMsgPack)GetProcAddress(hModule, "?TranslatePbMsgToMsgPack@Msg@Util@@YAHPAUITXData@@PAUITXMsgPack@@PAUITXArray@@HH@Z");
 
 	if (!TrueTranslatePbMsgToMsgPack) {
+		mainLog.doLog("error", sPid + u8"TrueTranslatePbMsgToMsgPack获取地址失败");
 		return;
 	}
 
 	TrueGetSelfUin = (Hook_GetSelfUin)GetProcAddress(hModule, "?GetSelfUin@Contact@Util@@YAKXZ");
 
 	if (!TrueGetSelfUin) {
+		mainLog.doLog("error", sPid + u8"TrueGetSelfUin获取地址失败");
 		return;
 	}
 	sUin = std::to_string(TrueGetSelfUin());
 	mylog = new logger(pLogpath, sUin);
 	if (!std::filesystem::exists(pLogpath / sUin)) std::filesystem::create_directories(pLogpath / sUin);
 
-	std::string sPid = std::to_string(GetCurrentProcessId());
 	mylog->doConfig("pid", sPid);
 }
 

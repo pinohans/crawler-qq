@@ -105,17 +105,21 @@ void logdlg::OnDropdownCombo3()
 		dateCombo.GetLBText(dateCombo.GetCurSel(), date);
 	dateCombo.ResetContent();
 
-	int cnt = 0;
+	BOOL bLastFlag = FALSE;
 	int last = 0;
 	for (const auto & entry : fs::directory_iterator(theApp.log->path / std::wstring(module)))
 	{
 		if (entry.status().type() == fs::file_type::regular)
 		{
 			std::wstring sDate = entry.path().filename().wstring();
-			dateCombo.InsertString(cnt++, sDate.c_str());
-			if (!sDate.compare(std::wstring(date)))
+			dateCombo.InsertString(0, sDate.c_str());
+			if (bLastFlag)
 			{
-				last = cnt - 1;
+				last++;
+			}
+			else if (!sDate.compare(std::wstring(date)))
+			{
+				bLastFlag = TRUE;
 			}
 		}
 	}
@@ -185,7 +189,7 @@ void logdlg::OnBnClickedButton1()
 			sqlite3_close_v2(this->sql);
 			this->sql = NULL;
 		}
-		int result = sqlite3_open_v2(pLogFilename.string().c_str(), &this->sql, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
+		int result = sqlite3_open_v2(WS2U8(pLogFilename.wstring()).c_str(), &this->sql, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
 		if (result != SQLITE_OK)
 		{
 			this->sql = NULL;
@@ -219,7 +223,7 @@ void logdlg::OnBnClickedButton1()
 	}
 
 	logList.SetItemCount(v.size());
-	logList.EnsureVisible(v.size() - 1, false);
+	logList.EnsureVisible(0, false);
 }
 
 
