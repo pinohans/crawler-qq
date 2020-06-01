@@ -187,12 +187,12 @@ void CcrawlerclientDlg::OnStart()
 	// TODO: 在此添加命令处理程序代码
 	if (_injection->IsStarted())
 	{
-		theApp.log->doLog("[ERROR]", u8"启动失败，监控已启动。");
+		theApp.log->doLog("[ERROR]", WS2U8(L"启动失败，监控已启动。"));
 	}
 	else
 	{
 		_injection->start();
-		theApp.log->doLog("[INFO]", u8"监控启动。");
+		theApp.log->doLog("[INFO]", WS2U8(L"监控启动。"));
 	}
 }
 
@@ -204,11 +204,11 @@ void CcrawlerclientDlg::OnStop()
 	if (_injection->IsStarted())
 	{
 		_injection->stop();
-		theApp.log->doLog("[INFO]", u8"监控停止。");
+		theApp.log->doLog("[INFO]", WS2U8(L"监控停止。"));
 	}
 	else
 	{
-		theApp.log->doLog("[ERROR]", u8"停止失败，监控未启动。");
+		theApp.log->doLog("[ERROR]", WS2U8(L"停止失败，监控未启动。"));
 	}
 }
 

@@ -91,17 +91,17 @@ BOOL SetPrivilege(
 
 BOOL LoadLib(LPCTSTR sModule, DWORD dwID)
 {
-	theApp.log->doLog("info", std::to_string(dwID) + u8"开始注入");
+	theApp.log->doLog("info", std::to_string(dwID) + WS2U8(L"开始注入"));
 
 	TCHAR szModule[MAX_PATH];
 	GetFullPathName(sModule, MAX_PATH, szModule, NULL);
-	theApp.log->doLog("info", u8"获得模块路径" + WS2U8(szModule));
+	theApp.log->doLog("info", WS2U8(L"获得模块路径") + WS2U8(szModule));
 	//HANDLE hToken;
 	//int dwRetVal = RTN_OK; // assume success from main()
 
 	//if (!OpenThreadToken(GetCurrentThread(), TOKEN_ADJUST_PRIVILEGES | TOKEN_QUERY, FALSE, &hToken))
 	//{
-	//	theApp.log->doLog("error", u8"thread token获取失败");
+	//	theApp.log->doLog("error", WS2U8(L"thread token获取失败"));
 	//	if (GetLastError() == ERROR_NO_TOKEN)
 	//	{
 	//		if (!ImpersonateSelf(SecurityImpersonation))
@@ -118,14 +118,14 @@ BOOL LoadLib(LPCTSTR sModule, DWORD dwID)
 	// enable SeDebugPrivilege
 	//if (!SetPrivilege(hToken, SE_DEBUG_NAME, TRUE))
 	//{
-	//	theApp.log->doLog("error", u8"enable SeDebugPrivilege失败");
+	//	theApp.log->doLog("error", WS2U8(L"enable SeDebugPrivilege失败"));
 	//	CloseHandle(hToken);
 	//	return FALSE;
 	//}
 
 	HANDLE hProcess = OpenProcess(PROCESS_ALL_ACCESS, FALSE, dwID);//打开进程
 	if (!hProcess) {
-		theApp.log->doLog("error", u8"打开进程失败");
+		theApp.log->doLog("error", WS2U8(L"打开进程失败"));
 		//CloseHandle(hToken);
 		return FALSE;
 	}
@@ -136,7 +136,7 @@ BOOL LoadLib(LPCTSTR sModule, DWORD dwID)
 	if (!pAddr || !WriteProcessMemory(hProcess, pAddr, szModule, cByte, NULL))//写入dll地址
 	{
 		DWORD e = GetLastError();
-		theApp.log->doLog("error", u8"写入dll地址失败" + std::to_string(e));
+		theApp.log->doLog("error", WS2U8(L"写入dll地址失败") + std::to_string(e));
 		VirtualFreeEx(hProcess, pAddr, cByte, MEM_RELEASE);
 		CloseHandle(hProcess);
 		//CloseHandle(hToken);
@@ -151,7 +151,7 @@ BOOL LoadLib(LPCTSTR sModule, DWORD dwID)
 
 	if (!pfnStartAddr)
 	{
-		theApp.log->doLog("error", u8"LoadLibraryW地址获取失败");
+		theApp.log->doLog("error", WS2U8(L"LoadLibraryW地址获取失败"));
 		VirtualFreeEx(hProcess, pAddr, cByte, MEM_RELEASE);
 		//CloseHandle(hToken);
 		CloseHandle(hProcess);
@@ -161,7 +161,7 @@ BOOL LoadLib(LPCTSTR sModule, DWORD dwID)
 	HANDLE hRemoteThread = CreateRemoteThread(hProcess, NULL, 0, pfnStartAddr, pAddr, 0, &dwThreadID);
 	if (!hRemoteThread)
 	{
-		theApp.log->doLog("error", u8"远程线程创建失败");
+		theApp.log->doLog("error", WS2U8(L"远程线程创建失败"));
 		VirtualFreeEx(hProcess, pAddr, cByte, MEM_RELEASE);
 		//CloseHandle(hToken);
 		CloseHandle(hProcess);
@@ -299,10 +299,10 @@ DWORD WINAPI ScanProcess(LPVOID lpParam)
 					if (bNeedInject)
 					{
 						if (LoadLib(TEXT("crawler.dll"), dwPid))
-							theApp.log->doLog(u8"[INFO]", std::to_string(dwPid) + u8"进程注入成功");
+							theApp.log->doLog(WS2U8(L"[INFO]"), std::to_string(dwPid) + WS2U8(L"进程注入成功"));
 						else
 
-							theApp.log->doLog(u8"[INFO]", std::to_string(dwPid) + u8"进程注入失败");
+							theApp.log->doLog(WS2U8(L"[INFO]"), std::to_string(dwPid) + WS2U8(L"进程注入失败"));
 					}
 				END_PRESENT_PROCESS:
 					CloseHandle(hModuleSnap);

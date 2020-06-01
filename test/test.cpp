@@ -14,7 +14,7 @@
 int main()
 {
 	sqlite3 *sql = NULL; // 一个打开的数据库实例
-	std::string a = u8"'#@&^!@哈哈哈";
+	std::string a = "test";
 
 	int result = sqlite3_open_v2("test.db", &sql, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
 	if (result == SQLITE_OK) {

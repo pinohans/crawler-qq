@@ -17,12 +17,12 @@ std::string GetNow(int level)
 	CHAR strTime[MAX_PATH];
 	if (level == 1)
 	{
-		sprintf_s(strTime, u8"%04d-%02d-%02d",
+		sprintf_s(strTime, WS2U8(L"%04d-%02d-%02d").c_str(),
 			stTime.wYear, stTime.wMonth, stTime.wDay);
 	}
 	else if (level == 2)
 	{
-		sprintf_s(strTime, u8"%04d-%02d-%02d %02d:%02d:%02d",
+		sprintf_s(strTime, WS2U8(L"%04d-%02d-%02d %02d:%02d:%02d").c_str(),
 			stTime.wYear, stTime.wMonth, stTime.wDay,
 			stTime.wHour, stTime.wMinute, stTime.wSecond);
 	}

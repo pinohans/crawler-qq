@@ -38,14 +38,14 @@ std::string httpIO::Get(std::string sUrl)
 		cRes = curl_easy_perform(pCurl);
 		if (cRes != CURLE_OK)
 		{
-			this->pLog->doLog(u8"[ERROR]", std::string("curl_easy_perform() failed: ") + curl_easy_strerror(cRes));
+			this->pLog->doLog("error", std::string("curl_easy_perform() failed: ") + curl_easy_strerror(cRes));
 			curl_easy_cleanup(pCurl);
 			return "";
 		}
 		curl_easy_cleanup(pCurl);
 		return ssOut.str();
 	}
-	this->pLog->doLog(u8"[ERROR]", u8"curl初始化失败！");
+	this->pLog->doLog("ERROR", WS2U8(L"curl初始化失败！"));
 	return "";
 }
 std::string httpIO::Post(std::string sUrl, std::string sData)
@@ -65,7 +65,7 @@ std::string httpIO::Post(std::string sUrl, std::string sData)
 		if (cRes != CURLE_OK)
 
 		{
-			this->pLog->doLog(u8"[ERROR]", std::string("curl_easy_perform() failed: ") + curl_easy_strerror(cRes));
+			this->pLog->doLog("error", std::string("curl_easy_perform() failed: ") + curl_easy_strerror(cRes));
 
 			curl_easy_cleanup(pCurl);
 			return "";
@@ -73,7 +73,7 @@ std::string httpIO::Post(std::string sUrl, std::string sData)
 		curl_easy_cleanup(pCurl);
 		return ssOut.str();
 	}
-	this->pLog->doLog(u8"[ERROR]", u8"curl初始化失败！");
+	this->pLog->doLog("error", WS2U8(L"curl初始化失败！"));
 	return "";
 }
 BOOL httpIO::Download(std::string sUrl, std::string sFilename)
@@ -97,7 +97,7 @@ BOOL httpIO::Download(std::string sUrl, std::string sFilename)
 			cRes = curl_easy_perform(pCurl);
 			if (cRes != CURLE_OK)
 			{
-				this->pLog->doLog(u8"[ERROR]", std::string("curl_easy_perform() failed: ") + curl_easy_strerror(cRes));
+				this->pLog->doLog("error", std::string("curl_easy_perform() failed: ") + curl_easy_strerror(cRes));
 				fclose(fpFile);
 				curl_easy_cleanup(pCurl);
 				return FALSE;
@@ -106,10 +106,10 @@ BOOL httpIO::Download(std::string sUrl, std::string sFilename)
 			curl_easy_cleanup(pCurl);
 			return TRUE;
 		}
-		this->pLog->doLog(u8"[ERROR]", u8"下载资源目标文件被占用！");
+		this->pLog->doLog("error", WS2U8(L"下载资源目标文件被占用！"));
 		curl_easy_cleanup(pCurl);
 	}
-	this->pLog->doLog(u8"[ERROR]", u8"curl初始化失败！");
+	this->pLog->doLog("error", WS2U8(L"curl初始化失败！"));
 	return FALSE;
 }
 
@@ -133,27 +133,27 @@ bool httpIO::SendRabbitmq(std::string sHostname,
 	pSocket = amqp_tcp_socket_new(cConn);
 	if (!pSocket)
 	{
-		this->pLog->doLog("[ERROR]", u8"发送至rabbitmq，socket建立错误");
+		this->pLog->doLog("[ERROR]", WS2U8(L"发送至rabbitmq，socket建立错误"));
 		return false;
 	}
 
 	iStatus = amqp_socket_open(pSocket, sHostname.c_str(), std::stoi(sPort));
 	if (iStatus)
 	{
-		this->pLog->doLog("[ERROR]", u8"发送至rabbitmq，status错误");
+		this->pLog->doLog("[ERROR]", WS2U8(L"发送至rabbitmq，status错误"));
 		return false;
 	}
 
 	if (amqp_login(cConn, sVhost.c_str(), 0, 131072, 0, AMQP_SASL_METHOD_PLAIN, sUsername.c_str(), sPassword.c_str()).reply_type != 1)
 	{
-		this->pLog->doLog("[ERROR]", u8"发送至rabbitmq，login错误");
+		this->pLog->doLog("[ERROR]", WS2U8(L"发送至rabbitmq，login错误"));
 		return false;
 	}
 
 	amqp_channel_open(cConn, 1);
 	if (amqp_get_rpc_reply(cConn).reply_type != 1)
 	{
-		this->pLog->doLog("[ERROR]", u8"发送至rabbitmq，reply错误");
+		this->pLog->doLog("[ERROR]", WS2U8(L"发送至rabbitmq，reply错误"));
 		return false;
 	}
 	amqp_queue_bind(cConn, 1, amqp_cstring_bytes(sQueue.c_str()), amqp_cstring_bytes(sExchange.c_str()), amqp_cstring_bytes(sRoutingkey.c_str()), amqp_empty_table);
@@ -165,23 +165,23 @@ bool httpIO::SendRabbitmq(std::string sHostname,
 
 		if (amqp_basic_publish(cConn, 1, amqp_cstring_bytes(sExchange.c_str()), amqp_cstring_bytes(sRoutingkey.c_str()), 0, 0, &props, amqp_cstring_bytes(sMessage.c_str())) < 0)
 		{
-			this->pLog->doLog("[ERROR]", u8"发送至rabbitmq，publish错误");
+			this->pLog->doLog("[ERROR]", WS2U8(L"发送至rabbitmq，publish错误"));
 			return false;
 		}
 	}
 
 	if (amqp_channel_close(cConn, 1, AMQP_REPLY_SUCCESS).reply_type != 1)
 	{
-		this->pLog->doLog("[ERROR]", u8"rabbitmq，channel关闭错误");
+		this->pLog->doLog("[ERROR]", WS2U8(L"rabbitmq，channel关闭错误"));
 		return false;
 	}
 	if (amqp_connection_close(cConn, AMQP_REPLY_SUCCESS).reply_type != 1) {
-		this->pLog->doLog("[ERROR]", u8"rabbitmq，connection关闭错误");
+		this->pLog->doLog("[ERROR]", WS2U8(L"rabbitmq，connection关闭错误"));
 		return false;
 	}
 	if (amqp_destroy_connection(cConn) < 0)
 	{
-		this->pLog->doLog("[ERROR]", u8"rabbitmq，destroy关闭错误");
+		this->pLog->doLog("[ERROR]", WS2U8(L"rabbitmq，destroy关闭错误"));
 		return false;
 	}
 	return true;

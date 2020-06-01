@@ -21,5 +21,6 @@ public:
 	~ITXData();
 
 	std::vector<ITXDataItem> v;
+	DWORD get(std::string _sName);
 };
 

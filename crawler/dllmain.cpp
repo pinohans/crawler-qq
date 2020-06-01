@@ -55,47 +55,86 @@ int __cdecl NewTranslatePbMsgToMsgPack(PVOID a1, PVOID a2, PVOID a3, int a4, int
 	_asm mov uiEbpAddr, ebp;
 
 	ITXData txdMsg(*(PVOID*)(*(DWORD*)uiEbpAddr - 0xc));
-	ITXData txdMsgHead((PVOID)txdMsg.v[0].uiValue);
 
-	// 跳过历史消息，直接处理新消息
-	if (txdMsgHead.v[1].uiValue != 0x52) {
-		return TrueTranslatePbMsgToMsgPack(a1, a2, a3, a4, a5);
-	}
-	ITXData txdGroupInfo((PVOID)txdMsgHead.v[5].uiValue);
-	ITXData txdMsgBody((PVOID)txdMsg.v[1].uiValue);
-	ITXData txdRichText((PVOID)txdMsgBody.v[0].uiValue);
-
-	ITXData txdMsgtext((PVOID)((DWORD**)txdRichText.v[0].uiValue)[3][0]);
-	ITXData txdText((PVOID)txdMsgtext.v[0].uiValue);
-
-
+	DWORD value;
 	msg mMsg(mylog);
-
-	mMsg.sContent = (CHAR*)txdText.v[0].uiValue;
-
-
+	// sFontname
 	mMsg.sFontname = "";
-	mMsg.sCrawltime = std::to_string(txdMsgHead.v[3].uiValue);
-
 	// sUin
 	mMsg.sUin = sUin;
+	// sContent
+	value = txdMsg.get("msg_body");
+	if (value != (DWORD)-1)
+	{
+		ITXData msg_body((PVOID)value);
+		value = msg_body.get("rich_text");
+		if (value != (DWORD)-1)
+		{
+			ITXData rich_text((PVOID)value);
+			value = rich_text.get("elems");
+			if (value != (DWORD)-1)
+			{
+				ITXData msg_text((PVOID)((DWORD**)value)[3][0]);
+				value = msg_text.get("text");
+				if (value != (DWORD)-1)
+				{
+					ITXData text((PVOID)value);
+					value = text.get("str");
+					if (value != (DWORD)-1)
+					{
+						mMsg.sContent = (CHAR*)value;
+					}
+					else goto END;
+				}
+				else goto END;
+			}
+			else goto END;
+		}
+		else goto END;
+	}
+	else goto END;
 
+	value = txdMsg.get("msg_head");
+	if (value != (DWORD)-1)
+	{
+		ITXData msg_head((PVOID)value);
+		value = msg_head.get("msg_type");
+		// 跳过历史消息，直接处理新消息
+		if (value != 0x52)
+			goto END;
 
+		// sQQ
+		value = msg_head.get("from_uin");
+		if (value != (DWORD)-1)
+			mMsg.sQQ = std::to_string(*(DWORD*)value);
 
-	// sNickname
-	// sQQ
-	mMsg.sNickname = (CHAR*)txdGroupInfo.v[1].uiValue;
-	mMsg.sQQ = std::to_string(*(DWORD*)txdMsgHead.v[0].uiValue);
+		value = msg_head.get("group_info");
+		if (value != (DWORD)-1)
+		{
+			ITXData group_info((PVOID)value);
+			// sNickname
+			value = group_info.get("group_card");
+			if (value != (DWORD)-1)
+				mMsg.sNickname = (CHAR*)value;
 
-	// sGroupid
-	mMsg.sGroupid = std::to_string(*(DWORD*)txdGroupInfo.v[0].uiValue);
+			// sGroupid
+			value = group_info.get("group_code");
+			if (value != (DWORD)-1)
+				mMsg.sGroupid = std::to_string(*(DWORD*)value);
 
-	// sGroupname
-	mMsg.sGroupname = "";
+		}
+		value = msg_head.get("msg_time");
+		if (value != (DWORD)-1)
+			mMsg.sCrawltime = std::to_string(value);
+		else
+			mMsg.sCrawltime = std::to_string((DWORD)time(0));
+
+	}
 
 	mMsg.bDone = mMsg.bLongtext = TRUE;
 
 	mMsg.Send();
+END:
 	return TrueTranslatePbMsgToMsgPack(a1, a2, a3, a4, a5);
 }
 
@@ -132,25 +171,25 @@ void Init(HMODULE hModule)
 	std::string sPid = std::to_string(GetCurrentProcessId());
 
 	hModule = GetModuleHandle(TEXT("KernelUtil.dll"));
-	mainLog.doLog("debug", sPid + u8"发现KernelUtil.dll句柄");
+	mainLog.doLog("debug", sPid + WS2U8(L"发现KernelUtil.dll句柄"));
 	TrueTranslateGroupMsgToMsgPack = (Hook_TranslateGroupMsgToMsgPack)GetProcAddress(hModule, "?TranslateGroupMsgToMsgPack@Msg@Util@@YAHABVCTXBuffer@@_JPAUITXMsgPack@@PAUITXArray@@PAUITXData@@@Z");
 
 	if (!TrueTranslateGroupMsgToMsgPack) {
-		mainLog.doLog("error", sPid + u8"TrueTranslateGroupMsgToMsgPack获取地址失败");
+		mainLog.doLog("error", sPid + WS2U8(L"TrueTranslateGroupMsgToMsgPack获取地址失败"));
 		return;
 	}
 
 	TrueTranslatePbMsgToMsgPack = (Hook_TranslatePbMsgToMsgPack)GetProcAddress(hModule, "?TranslatePbMsgToMsgPack@Msg@Util@@YAHPAUITXData@@PAUITXMsgPack@@PAUITXArray@@HH@Z");
 
 	if (!TrueTranslatePbMsgToMsgPack) {
-		mainLog.doLog("error", sPid + u8"TrueTranslatePbMsgToMsgPack获取地址失败");
+		mainLog.doLog("error", sPid + WS2U8(L"TrueTranslatePbMsgToMsgPack获取地址失败"));
 		return;
 	}
 
 	TrueGetSelfUin = (Hook_GetSelfUin)GetProcAddress(hModule, "?GetSelfUin@Contact@Util@@YAKXZ");
 
 	if (!TrueGetSelfUin) {
-		mainLog.doLog("error", sPid + u8"TrueGetSelfUin获取地址失败");
+		mainLog.doLog("error", sPid + WS2U8(L"TrueGetSelfUin获取地址失败"));
 		return;
 	}
 	sUin = std::to_string(TrueGetSelfUin());

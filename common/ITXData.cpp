@@ -38,3 +38,15 @@ ITXData::ITXData(PVOID pAddr)
 ITXData::~ITXData()
 {
 }
+
+DWORD ITXData::get(std::string _sName)
+{
+	for (std::vector<ITXDataItem>::iterator it = this->v.begin(); it != this->v.end(); ++it)
+	{
+		if ((*it).sName == _sName)
+		{
+			return (*it).uiValue;
+		}
+	}
+	return -1;
+}

@@ -147,13 +147,13 @@ void logdlg::OnGetdispinfoList1(NMHDR *pNMHDR, LRESULT *pResult)
 	{
 		switch (pItem->iSubItem) {
 		case 0: //填充数据项的名字
-			lstrcpyW(pItem->pszText, U82WS(v[iItemIndx].sTime.c_str()).c_str());
+			lstrcpyW(pItem->pszText, U82WS(v[iItemIndx].sTime).substr(0, 125).c_str());
 			break;
 		case 1: //填充子项1
-			lstrcpyW(pItem->pszText, U82WS(v[iItemIndx].sLevel.c_str()).c_str());
+			lstrcpyW(pItem->pszText, U82WS(v[iItemIndx].sLevel).substr(0, 125).c_str());
 			break;
 		case 2: //填充子项2
-			lstrcpyW(pItem->pszText, U82WS(v[iItemIndx].sMessage.c_str()).c_str());
+			lstrcpyW(pItem->pszText, U82WS(v[iItemIndx].sMessage).substr(0, 125).c_str());
 			break;
 		}
 	}

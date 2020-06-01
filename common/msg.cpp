@@ -104,7 +104,7 @@ void msg::Parse()
 			}
 			break;
 		case 0x02:
-			this->sContent += u8"[表情]";
+			this->sContent += WS2U8(L"[表情]");
 			break;
 		default:
 			break;
@@ -113,7 +113,7 @@ void msg::Parse()
 
 	if (this->sContent.length())
 	{
-		this->bLongtext = this->sContent == u8"你的QQ暂不支持查看[转发多条消息]，请期待后续版本。";
+		this->bLongtext = this->sContent == WS2U8(L"你的QQ暂不支持查看[转发多条消息]，请期待后续版本。");
 		this->bDone = TRUE ^ this->bLongtext;
 		return;
 	}
