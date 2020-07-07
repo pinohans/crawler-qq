@@ -187,12 +187,12 @@ void CcrawlerclientDlg::OnStart()
 	// TODO: 在此添加命令处理程序代码
 	if (_injection->IsStarted())
 	{
-		theApp.log->doLog("[ERROR]", WS2U8(L"启动失败，监控已启动。"));
+		troycrawler::log::error(WS2U8(L"启动失败，监控已启动。"));
 	}
 	else
 	{
 		_injection->start();
-		theApp.log->doLog("[INFO]", WS2U8(L"监控启动。"));
+		troycrawler::log::info(WS2U8(L"监控启动。"));
 	}
 }
 
@@ -204,11 +204,11 @@ void CcrawlerclientDlg::OnStop()
 	if (_injection->IsStarted())
 	{
 		_injection->stop();
-		theApp.log->doLog("[INFO]", WS2U8(L"监控停止。"));
+		troycrawler::log::info(WS2U8(L"监控停止。"));
 	}
 	else
 	{
-		theApp.log->doLog("[ERROR]", WS2U8(L"停止失败，监控未启动。"));
+		troycrawler::log::error(WS2U8(L"停止失败，监控未启动。"));
 	}
 }
 
@@ -223,42 +223,18 @@ void CcrawlerclientDlg::OnClickedRefreshButton()
 	// TODO: 在此添加控件通知处理程序代码
 	logList.DeleteAllItems();
 
-	std::filesystem::path pLogFilename = theApp.log->path / "config.db";
-	if (this->sql_log) {}
-	else
+	std::map<int, std::string> mPid = troycrawler::config::get("pid");
+	for (std::map<int, std::string>::iterator it = mPid.begin(); it != mPid.end(); ++it)
 	{
-		int result = sqlite3_open_v2(WS2U8(pLogFilename.wstring()).c_str(), &this->sql_log, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
-		if (result != SQLITE_OK)
-		{
-			this->sql_log = NULL;
-			return;
-		}
-	}
-	sqlite3_stmt *stmt = NULL;
-
-	int result = sqlite3_prepare_v2(this->sql_log, "CREATE TABLE IF NOT EXISTS config( id integer PRIMARY KEY AUTOINCREMENT, module text NOT NULL, key text NOT NULL, value text NOT NULL ); ", -1, &stmt, NULL);
-
-	if (result == SQLITE_OK) {
-		sqlite3_step(stmt);
-		sqlite3_finalize(stmt);
-
-		result = sqlite3_prepare_v2(this->sql_log, "SELECT module, value FROM config WHERE key='pid'; ", -1, &stmt, NULL);
-
-		if (result == SQLITE_OK) {
-
-			while (sqlite3_step(stmt) == SQLITE_ROW) {
-				CString module = U82WS(std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)))).c_str();
-				CString pid = U82WS(std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)))).c_str();
-
-				logList.InsertItem(0, module);
-				logList.SetItemText(0, 1, pid);
-				if (pid.Compare(L""))
-					logList.SetItemText(0, 2, L"监控中");
-				else
-					logList.SetItemText(0, 2, L"停止");
-			}
-			sqlite3_finalize(stmt);
-		}
+		std::string sPid = it->second;
+		CString module = U82WS(sPid.substr(0, sPid.find('/'))).c_str();
+		CString pid = U82WS(sPid.substr(sPid.find('/')+1)).c_str();
+		logList.InsertItem(0, module);
+		logList.SetItemText(0, 1, pid);
+		if (pid.Compare(L"0"))
+			logList.SetItemText(0, 2, L"监控中");
+		else
+			logList.SetItemText(0, 2, L"停止");
 	}
 	return;
 }

@@ -3,23 +3,6 @@
 
 // logdlg 对话框
 
-struct Message
-{
-	std::string sTime;
-	std::string sLevel;
-	std::string sMessage;
-
-	Message(){}
-	Message(
-		const unsigned char* _sTime,
-		const unsigned char* _sLevel,
-		const unsigned char* _sMessage) {
-		this->sTime = std::string(reinterpret_cast<const char*>(_sTime));
-		this->sLevel = std::string(reinterpret_cast<const char*>(_sLevel));
-		this->sMessage = std::string(reinterpret_cast<const char*>(_sMessage));
-	}
-};
-
 class logdlg : public CDialogEx
 {
 	DECLARE_DYNAMIC(logdlg)
@@ -28,7 +11,7 @@ public:
 	logdlg(CWnd* pParent = nullptr);   // 标准构造函数
 	virtual ~logdlg();
 	sqlite3 *sql = NULL; // 一个打开的数据库实例
-	std::vector<Message> v;
+	std::vector<troycrawler::log::Message> v;
 // 对话框数据
 #ifdef AFX_DESIGN_TIME
 	enum { IDD = IDD_logdlg1 };

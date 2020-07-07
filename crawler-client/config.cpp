@@ -61,7 +61,7 @@ void config::OnBnClickedAdd()
 	// TODO: 在此添加控件通知处理程序代码
 	CString url;
 	urlEdit.GetWindowText(url);
-	theApp.log->doConfig("url", std::string(WS2U8(std::wstring(url))), FALSE);
+	troycrawler::config::add("url", std::string(WS2U8(std::wstring(url))));
 	this->Refresh();
 }
 
@@ -72,38 +72,14 @@ void config::Refresh()
 
 	configlist.DeleteAllItems();
 
-	std::filesystem::path pLogFilename = theApp.log->path / "config.db";
-	if (this->sql) {}
-	else
+	std::map<int,std::string> mUrl = troycrawler::config::get("url");
+	for(std::map<int, std::string>::iterator it = mUrl.begin(); it != mUrl.end(); ++it)
 	{
-		int result = sqlite3_open_v2(WS2U8(pLogFilename.wstring()).c_str(), &this->sql, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
-		if (result != SQLITE_OK)
-		{
-			this->sql = NULL;
-			return;
-		}
-	}
-	sqlite3_stmt *stmt = NULL;
+		CString id = U82WS(std::to_string(it->first)).c_str();
+		CString url = U82WS(it->second).c_str();
 
-	int result = sqlite3_prepare_v2(this->sql, "CREATE TABLE IF NOT EXISTS config( id integer PRIMARY KEY AUTOINCREMENT, module text NOT NULL, key text NOT NULL, value text NOT NULL ); ", -1, &stmt, NULL);
-
-	if (result == SQLITE_OK) {
-		sqlite3_step(stmt);
-		sqlite3_finalize(stmt);
-
-		result = sqlite3_prepare_v2(this->sql, "SELECT id, value FROM config WHERE key='url'; ", -1, &stmt, NULL);
-
-		if (result == SQLITE_OK) {
-
-			while (sqlite3_step(stmt) == SQLITE_ROW) {
-				CString id = U82WS(std::to_string(sqlite3_column_int(stmt, 0))).c_str();
-				CString url = U82WS(std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 1)))).c_str();
-
-				configlist.InsertItem(0, id);
-				configlist.SetItemText(0, 1, url);
-			}
-			sqlite3_finalize(stmt);
-		}
+		configlist.InsertItem(0, id);
+		configlist.SetItemText(0, 1, url);
 	}
 }
 
@@ -114,6 +90,6 @@ void config::OnBnClickedDelete()
 	POSITION pos = configlist.GetFirstSelectedItemPosition();
 	int id = atoi(WS2U8(std::wstring(configlist.GetItemText(configlist.GetNextSelectedItem(pos), 0))).c_str());
 
-	theApp.log->deleteConfig("url", id);
+	troycrawler::config::del(id);
 	this->Refresh();
 }

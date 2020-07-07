@@ -18,8 +18,6 @@ class CcrawlerclientApp : public CWinApp
 {
 public:
 	CcrawlerclientApp();
-	httpIO* http;
-	logger* log;
 
 // 重写
 public:

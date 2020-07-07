@@ -16,9 +16,6 @@ Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "crawler-client", "crawler-c
 	EndProjectSection
 EndProject
 Project("{8BC9CEB8-8B4A-11D0-8D11-00A0C91BC942}") = "test", "test\test.vcxproj", "{D6DCBBC2-AA0B-4E08-A20D-D4B58F3C803D}"
-	ProjectSection(ProjectDependencies) = postProject
-		{6E86C84F-3648-4107-A920-CDB20536EC89} = {6E86C84F-3648-4107-A920-CDB20536EC89}
-	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -59,7 +56,6 @@ Global
 		{D6DCBBC2-AA0B-4E08-A20D-D4B58F3C803D}.Release|x64.ActiveCfg = Release|x64
 		{D6DCBBC2-AA0B-4E08-A20D-D4B58F3C803D}.Release|x64.Build.0 = Release|x64
 		{D6DCBBC2-AA0B-4E08-A20D-D4B58F3C803D}.Release|x86.ActiveCfg = Release|Win32
-		{D6DCBBC2-AA0B-4E08-A20D-D4B58F3C803D}.Release|x86.Build.0 = Release|Win32
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

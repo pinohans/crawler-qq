@@ -3,8 +3,8 @@
 class msg
 {
 public:
-	msg(logger* log = NULL);
-	msg(std::string sMsg, logger* log = NULL);
+	msg();
+	msg(std::string sMsg);
 	~msg();
 
 	std::string sFontname="";
@@ -16,17 +16,15 @@ public:
 	std::string sGroupname="None";
 	std::string sCrawltime="0";
 	std::string sSource = "qq";
-	std::string sTitle = "PC";
+	std::string sTitle = "pc";
+	std::string sType = "1";
 	bool bLongtext;
 	bool bDone;
 
 	BOOL Send();
-	httpIO* http;
-	sqlite3 * sql = NULL;
 protected:
 	std::string sMsg;
 	void Parse();
-	logger *log;
 public:
 	std::string Jsondump();
 };

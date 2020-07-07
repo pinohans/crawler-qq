@@ -158,20 +158,21 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClInclude Include="convert.h" />
-    <ClInclude Include="httoIO.h" />
+    <ClInclude Include="http.h" />
     <ClInclude Include="ITXData.h" />
-    <ClInclude Include="logger.h" />
+    <ClInclude Include="log.h" />
     <ClInclude Include="msg.h" />
     <ClInclude Include="resource.h" />
     <ClInclude Include="sqlite3.h" />
     <ClInclude Include="stdafx.h" />
     <ClInclude Include="targetver.h" />
+    <ClInclude Include="troycrawler.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="convert.cpp" />
-    <ClCompile Include="httoIO.cpp" />
+    <ClCompile Include="http.cpp" />
     <ClCompile Include="ITXData.cpp" />
-    <ClCompile Include="logger.cpp" />
+    <ClCompile Include="log.cpp" />
     <ClCompile Include="msg.cpp" />
     <ClCompile Include="sqlite3.c" />
     <ClCompile Include="stdafx.cpp">
@@ -180,6 +181,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="troycrawler.cpp" />
   </ItemGroup>
   <ItemGroup>
     <Library Include="lib\detours.lib" />

@@ -104,7 +104,7 @@
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <AdditionalLibraryDirectories>$(SolutionDir)$(Configuration)\;$(SolutionDir)common\lib\</AdditionalLibraryDirectories>
-      <AdditionalDependencies>libcurl.lib;WinMM.Lib;Wldap32.Lib;WS2_32.Lib;libcrypto.lib;libssl.lib;common.lib;sqlite.lib</AdditionalDependencies>
+      <AdditionalDependencies>libcurl.lib;WinMM.Lib;Wldap32.Lib;WS2_32.Lib;libcrypto.lib;libssl.lib</AdditionalDependencies>
       <IgnoreSpecificDefaultLibraries>MSVCRT.lib</IgnoreSpecificDefaultLibraries>
     </Link>
   </ItemDefinitionGroup>

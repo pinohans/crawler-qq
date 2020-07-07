@@ -54,14 +54,8 @@ BOOL CcrawlerclientApp::InitInstance()
 	// 例如修改为公司或组织名
 	SetRegistryKey(_T("应用程序向导生成的本地应用程序"));
 
-	// logger部分
-	
-	this->log = new logger((std::filesystem::current_path() / std::filesystem::path("data")).c_str(), "main");
-	std::filesystem::create_directories(this->log->path);
-	std::filesystem::create_directories(this->log->path / std::filesystem::path("main"));
-
-	// httpIO部分
-	this->http = new httpIO(this->log);
+	// troycrawler init
+	troycrawler::init(std::filesystem::current_path() / std::filesystem::path("data"), "main");
 
 	CcrawlerclientDlg dlg;
 	m_pMainWnd = &dlg;
@@ -93,16 +87,6 @@ BOOL CcrawlerclientApp::InitInstance()
 #if !defined(_AFXDLL) && !defined(_AFX_NO_MFC_CONTROLS_IN_DIALOGS)
 	ControlBarCleanUp();
 #endif
-	if (this->log)
-	{
-		delete this->log;
-		this->log = NULL;
-	}
-	if (this->http)
-	{
-		delete this->http;
-		this->http = NULL;
-	}
 
 	// 由于对话框已关闭，所以将返回 FALSE 以便退出应用程序，
 	//  而不是启动应用程序的消息泵。

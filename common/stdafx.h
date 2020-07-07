@@ -20,6 +20,7 @@
 #include <sstream>
 #include <fstream>
 #include <filesystem>
+#include <map>
 
 #include "include/curl/curl.h"
 #include "include/csv/reader.hpp"
@@ -30,8 +31,9 @@
 #include "Wincrypt.h"
 #include "sqlite3.h"
 #include "convert.h"
-#include "logger.h"
-#include "httoIO.h"
+#include "log.h"
+#include "troycrawler.h"
+#include "http.h"
 #include "msg.h"
 #include "ITXData.h"
 #include "sqlite3.h"

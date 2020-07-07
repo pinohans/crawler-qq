@@ -77,7 +77,7 @@ void logdlg::OnDropdownCombo1()
 	moduleCombo.ResetContent();
 	int cnt = 0;
 	int last = 0;
-	for (const auto & entry : fs::directory_iterator(theApp.log->path))
+	for (const auto & entry : fs::directory_iterator(troycrawler::pFilepath))
 	{
 		if (entry.status().type() == fs::file_type::directory)
 		{
@@ -107,7 +107,7 @@ void logdlg::OnDropdownCombo3()
 
 	BOOL bLastFlag = FALSE;
 	int last = 0;
-	for (const auto & entry : fs::directory_iterator(theApp.log->path / std::wstring(module)))
+	for (const auto & entry : fs::directory_iterator(troycrawler::pFilepath / std::wstring(module)))
 	{
 		if (entry.status().type() == fs::file_type::regular)
 		{
@@ -176,51 +176,7 @@ void logdlg::OnBnClickedButton1()
 	std::string sModule = WS2U8(std::wstring(module));
 	std::string sDate = WS2U8(std::wstring(date));
 
-	std::filesystem::path pLogFilename = theApp.log->path / sModule / sDate;
-
-	if (!module.Compare(L"") && !date.Compare(L"") && !std::filesystem::exists(pLogFilename))return;
-
-
-	if (this->sql && !std::filesystem::path(sqlite3_db_filename(this->sql, NULL)).compare(pLogFilename)) {}
-	else
-	{
-		if (this->sql)
-		{
-			sqlite3_close_v2(this->sql);
-			this->sql = NULL;
-		}
-		int result = sqlite3_open_v2(WS2U8(pLogFilename.wstring()).c_str(), &this->sql, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
-		if (result != SQLITE_OK)
-		{
-			this->sql = NULL;
-			return;
-		}
-	}
-
-	sqlite3_stmt *stmt = NULL;
-	int result = sqlite3_prepare_v2(sql, "SELECT count(*) FROM log;", -1, &stmt, NULL);
-
-	int size = 0;
-	if (result == SQLITE_OK) {
-		sqlite3_bind_text(stmt, 1, sModule.c_str(), -1, SQLITE_STATIC);
-			if (sqlite3_step(stmt) == SQLITE_ROW) {
-				size = sqlite3_column_int(stmt, 0);
-			}
-			sqlite3_step(stmt);
-			sqlite3_finalize(stmt);
-	}
-	size = min(size, 2000);
-	result = sqlite3_prepare_v2(sql, "SELECT time, level, message FROM log ORDER BY id DESC LIMIT 0,?;", -1, &stmt, NULL);
-
-	v.clear();
-	if (result == SQLITE_OK) {
-		sqlite3_bind_int(stmt, 1, size);
-		while (sqlite3_step(stmt) == SQLITE_ROW) {
-			v.push_back(Message(sqlite3_column_text(stmt, 0), sqlite3_column_text(stmt, 1), sqlite3_column_text(stmt, 2)));
-		}
-		sqlite3_step(stmt);
-		sqlite3_finalize(stmt);
-	}
+	v = troycrawler::log::get(sModule, sDate);
 
 	logList.SetItemCount(v.size());
 	logList.EnsureVisible(0, false);

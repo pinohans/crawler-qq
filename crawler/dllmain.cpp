@@ -1,14 +1,19 @@
 ﻿// dllmain.cpp : 定义 DLL 应用程序的入口点。
 #include "stdafx.h"
-
+#include <stdexcept>
+#include <limits>
+#include <iostream>
+#include <windows.h>
 typedef int(__cdecl *Hook_TranslateGroupMsgToMsgPack)(PVOID a1, struct CTXBuffer *a2, __int64 a3, struct ITXMsgPack *a4, struct ITXArray *a5);
 typedef int(__cdecl *Hook_TranslatePbMsgToMsgPack)(PVOID a1, PVOID a2, PVOID a3, int a4, int a5);
 typedef UINT(__cdecl *Hook_GetSelfUin)();
+typedef int(__cdecl *Hook_SaveMsg194)(PVOID a1, PVOID a2, PVOID a3, PVOID a4, PVOID a5, unsigned int a6, unsigned int a7, PVOID a8);
 
 Hook_TranslateGroupMsgToMsgPack TrueTranslateGroupMsgToMsgPack;
 Hook_TranslatePbMsgToMsgPack TrueTranslatePbMsgToMsgPack;
 Hook_GetSelfUin TrueGetSelfUin;
-logger *mylog;
+Hook_SaveMsg194 TrueSaveMsg194;
+
 std::filesystem::path pLogpath;
 std::filesystem::path pDatapath;
 std::string sUin;
@@ -20,12 +25,11 @@ int __cdecl NewTranslateGroupMsgToMsgPack(PVOID a1, struct CTXBuffer *a2, __int6
 	if (bPreFun != 0x3c) {
 		return TrueTranslateGroupMsgToMsgPack(a1, a2, a3, a4, a5);
 	}
-
 	CHAR* bufMsg = *(*(CHAR***)a1 + 2);
 	DWORD uiLen = *(*(DWORD**)a1 + 3);
 	std::string sMsg = "";
 	for (int i = 0; i < uiLen; i++)sMsg += bufMsg[i];
-	msg mMsg(sMsg, mylog);
+	msg mMsg = msg(sMsg);
 	// sUin
 	mMsg.sUin = sUin;
 
@@ -57,7 +61,7 @@ int __cdecl NewTranslatePbMsgToMsgPack(PVOID a1, PVOID a2, PVOID a3, int a4, int
 	ITXData txdMsg(*(PVOID*)(*(DWORD*)uiEbpAddr - 0xc));
 
 	DWORD value;
-	msg mMsg(mylog);
+	msg mMsg = msg();
 	// sFontname
 	mMsg.sFontname = "";
 	// sUin
@@ -138,6 +142,39 @@ END:
 	return TrueTranslatePbMsgToMsgPack(a1, a2, a3, a4, a5);
 }
 
+int __cdecl NewSaveMsg194(PVOID a1, PVOID a2, PVOID a3, PVOID a4, PVOID a5, unsigned int a6, unsigned int a7, PVOID a8)
+{
+	ITXData txdMsg(a8);
+	DWORD value;
+	value = txdMsg.get("MSGBOX_bsPreviewMsgText");
+	msg mMsg = msg();
+
+	if (value != (DWORD)-1)
+	{
+		mMsg.sContent = WS2U8((wchar_t*)value);
+		mMsg.sType = 2;
+		mMsg.sUin = sUin;
+		value = txdMsg.get("dwSenderUin");
+		if (value != (DWORD)-1)
+		{
+			mMsg.sQQ = std::to_string(value);
+		}
+		value = txdMsg.get("strRecieverShowName");
+		if (value != (DWORD)-1)
+		{
+			mMsg.sGroupname = WS2U8((wchar_t*)value);
+		}
+		value = txdMsg.get("dwTime");
+		if (value != (DWORD)-1)
+		{
+			mMsg.sCrawltime = std::to_string(value);
+		}
+
+		mMsg.bDone = TRUE;
+		mMsg.Send();
+	}
+	return TrueSaveMsg194(a1, a2, a3, a4, a5, a6, a7, a8);
+}
 
 BOOLEAN Hook()
 {
@@ -146,6 +183,7 @@ BOOLEAN Hook()
 	DetourUpdateThread(GetCurrentThread());
 	DetourAttach(&(PVOID&)TrueTranslateGroupMsgToMsgPack, NewTranslateGroupMsgToMsgPack);
 	DetourAttach(&(PVOID&)TrueTranslatePbMsgToMsgPack, NewTranslatePbMsgToMsgPack);
+	DetourAttach(&(PVOID&)TrueSaveMsg194, NewSaveMsg194);
 	DetourTransactionCommit();
 
 	return TRUE;
@@ -157,6 +195,7 @@ BOOLEAN Unhook()
 	DetourUpdateThread(GetCurrentThread());
 	DetourDetach(&(PVOID&)TrueTranslateGroupMsgToMsgPack, NewTranslateGroupMsgToMsgPack);
 	DetourDetach(&(PVOID&)TrueTranslatePbMsgToMsgPack, NewTranslatePbMsgToMsgPack);
+	DetourDetach(&(PVOID&)TrueSaveMsg194, NewSaveMsg194);
 	DetourTransactionCommit();
 
 	return TRUE;
@@ -167,38 +206,52 @@ void Init(HMODULE hModule)
 	WCHAR lpFilename[MAX_PATH];
 	GetModuleFileNameW(hModule, lpFilename, MAX_PATH);
 	pLogpath = std::filesystem::path(lpFilename).remove_filename() / std::filesystem::path("data");
-	logger mainLog = logger(pLogpath, "main");
-	std::string sPid = std::to_string(GetCurrentProcessId());
 
 	hModule = GetModuleHandle(TEXT("KernelUtil.dll"));
-	mainLog.doLog("debug", sPid + WS2U8(L"发现KernelUtil.dll句柄"));
 	TrueTranslateGroupMsgToMsgPack = (Hook_TranslateGroupMsgToMsgPack)GetProcAddress(hModule, "?TranslateGroupMsgToMsgPack@Msg@Util@@YAHABVCTXBuffer@@_JPAUITXMsgPack@@PAUITXArray@@PAUITXData@@@Z");
 
 	if (!TrueTranslateGroupMsgToMsgPack) {
-		mainLog.doLog("error", sPid + WS2U8(L"TrueTranslateGroupMsgToMsgPack获取地址失败"));
 		return;
 	}
 
 	TrueTranslatePbMsgToMsgPack = (Hook_TranslatePbMsgToMsgPack)GetProcAddress(hModule, "?TranslatePbMsgToMsgPack@Msg@Util@@YAHPAUITXData@@PAUITXMsgPack@@PAUITXArray@@HH@Z");
 
 	if (!TrueTranslatePbMsgToMsgPack) {
-		mainLog.doLog("error", sPid + WS2U8(L"TrueTranslatePbMsgToMsgPack获取地址失败"));
 		return;
 	}
 
 	TrueGetSelfUin = (Hook_GetSelfUin)GetProcAddress(hModule, "?GetSelfUin@Contact@Util@@YAKXZ");
 
 	if (!TrueGetSelfUin) {
-		mainLog.doLog("error", sPid + WS2U8(L"TrueGetSelfUin获取地址失败"));
 		return;
 	}
-	sUin = std::to_string(TrueGetSelfUin());
-	mylog = new logger(pLogpath, sUin);
-	if (!std::filesystem::exists(pLogpath / sUin)) std::filesystem::create_directories(pLogpath / sUin);
 
-	mylog->doConfig("pid", sPid);
+	TrueSaveMsg194 = (Hook_SaveMsg194)GetProcAddress(hModule, "?SaveMsg194@Msg@Util@@YAHPB_W000KKPAUITXMsgPack@@PAUITXData@@PAUITXCallback@@@Z");
+
+	if (!TrueSaveMsg194) {
+		return;
+	}
+
+	std::string sPid = std::to_string(GetCurrentProcessId());
+	sUin = std::to_string(TrueGetSelfUin());
+	troycrawler::init(pLogpath, sUin);
+	troycrawler::config::add("pid", sUin + "/" + sPid);
 }
 
+void Quit()
+{
+	std::map<int, std::string> mPid = troycrawler::config::get("pid");
+	for (std::map<int, std::string>::iterator it = mPid.begin(); it != mPid.end(); ++it)
+	{
+		std::string sPid = it->second;
+		std::string module = sPid.substr(0, sPid.find('/'));
+		if (module == sUin)
+		{
+			troycrawler::config::del(it->first);
+			return;
+		}
+	}
+}
 BOOL APIENTRY DllMain( HMODULE hModule,
                        DWORD  ul_reason_for_call,
                        LPVOID lpReserved
@@ -216,9 +269,7 @@ BOOL APIENTRY DllMain( HMODULE hModule,
 		break;
 	case DLL_PROCESS_DETACH:
 		Unhook();
-		mylog->doConfig("pid", "");
-		if (mylog)delete mylog;
-		mylog = NULL;
+		Quit();
         break;
     }
     return TRUE;

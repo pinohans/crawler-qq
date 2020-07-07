@@ -1,17 +1,13 @@
 #include "stdafx.h"
 
 
-msg::msg(logger* log)
+msg::msg()
 {
-	this->log = log;
-	this->http = new httpIO(log);
 }
 
-msg::msg(std::string sMsg, logger* log)
+msg::msg(std::string sMsg)
 {
 	this->sMsg = sMsg;
-	this->log = log;
-	this->http = new httpIO(log);
 
 	// sFontname
 	// sContent
@@ -24,8 +20,6 @@ msg::msg(std::string sMsg, logger* log)
 
 msg::~msg()
 {
-	if (this->http)delete this->http;
-	this->http = NULL;
 }
 
 void msg::Parse()
@@ -129,42 +123,13 @@ BOOL msg::Send()
 	if (this->bDone)
 	{
 		std::string sMessage = this->Jsondump();
-		if (this->log)
+		troycrawler::log::debug(sMessage);
+		std::map<int,std::string> url = troycrawler::config::get("url");
+		for (std::map<int, std::string>::iterator it = url.begin(); it != url.end(); ++it)
 		{
-			this->log->doLog("debug", sMessage);
+			troycrawler::http::post(it->second, sMessage);
 		}
-
-		std::filesystem::path pLogFilename = this->log->path / "config.db";
-		if (this->sql) {}
-		else
-		{
-			int result = sqlite3_open_v2(WS2U8(pLogFilename.wstring()).c_str(), &this->sql, SQLITE_OPEN_READWRITE | SQLITE_OPEN_CREATE | SQLITE_OPEN_NOMUTEX | SQLITE_OPEN_SHAREDCACHE, NULL);
-			if (result != SQLITE_OK)
-			{
-				this->sql = NULL;
-				return FALSE;
-			}
-		}
-		sqlite3_stmt *stmt = NULL;
-
-		int result = sqlite3_prepare_v2(this->sql, "CREATE TABLE IF NOT EXISTS config( id integer PRIMARY KEY AUTOINCREMENT, module text NOT NULL, key text NOT NULL, value text NOT NULL ); ", -1, &stmt, NULL);
-
-		if (result == SQLITE_OK) {
-			sqlite3_step(stmt);
-			sqlite3_finalize(stmt);
-
-			result = sqlite3_prepare_v2(this->sql, "SELECT value FROM config WHERE key='url'; ", -1, &stmt, NULL);
-
-			if (result == SQLITE_OK) {
-
-				while (sqlite3_step(stmt) == SQLITE_ROW) {
-					std::string url = std::string(reinterpret_cast<const char*>(sqlite3_column_text(stmt, 0)));
-					this->http->Post(url, sMessage);
-				}
-				sqlite3_finalize(stmt);
-				return TRUE;
-			}
-		}
+		return TRUE;
 	}
 	return FALSE;
 }
@@ -185,9 +150,9 @@ std::string msg::Jsondump()
 	jData["groupid"] = this->sGroupid;
 	jData["groupname"] = this->sGroupname;
 	jData["crawltime"] = this->sCrawltime;
-	jData["title"] = "pc";
-	jData["source"] = "qq";
-	jData["type"] = "1";
+	jData["title"] = this->sTitle;
+	jData["source"] = this->sSource;
+	jData["type"] = this->sType;
 	jData["status"] = "0";
 	jMessage["data"] = jData;
 	

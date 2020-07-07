@@ -21,13 +21,7 @@
     <ClInclude Include="targetver.h">
       <Filter>头文件</Filter>
     </ClInclude>
-    <ClInclude Include="httoIO.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
     <ClInclude Include="convert.h">
-      <Filter>头文件</Filter>
-    </ClInclude>
-    <ClInclude Include="logger.h">
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="msg.h">
@@ -42,18 +36,21 @@
     <ClInclude Include="sqlite3.h">
       <Filter>头文件</Filter>
     </ClInclude>
+    <ClInclude Include="log.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="troycrawler.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="http.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="stdafx.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
-    <ClCompile Include="httoIO.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
     <ClCompile Include="convert.cpp">
-      <Filter>源文件</Filter>
-    </ClCompile>
-    <ClCompile Include="logger.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="msg.cpp">
@@ -63,6 +60,15 @@
       <Filter>源文件</Filter>
     </ClCompile>
     <ClCompile Include="sqlite3.c">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="log.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="troycrawler.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
+    <ClCompile Include="http.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
   </ItemGroup>
